@@ -1,0 +1,1343 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>投資信託収益診断 Ver 1.0</title>
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VLKBJYMDDF"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+  gtag('config', 'G-VLKBJYMDDF');
+</script>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Mono:wght@300;400;500&family=Noto+Sans+JP:wght@300;400;500;600&display=swap');
+
+:root {
+  --ink: #111418;
+  --muted: #6b7280;
+  --muted2: #9ca3af;
+  --bg: #f3f4f6;
+  --surface: #ffffff;
+  --surface2: #f9fafb;
+  --border: #e5e7eb;
+  --border2: #d1d5db;
+  --accent: #1d4ed8;
+  --accent-lt: #eff6ff;
+  --green: #15803d;
+  --green-lt: #f0fdf4;
+  --gold: #b45309;
+  --gold-lt: #fffbeb;
+  --red: #b91c1c;
+  --red-lt: #fef2f2;
+  --purple: #6d28d9;
+  --teal: #0f766e;
+}
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { background: var(--bg); color: var(--ink); font-family: 'Noto Sans JP', sans-serif; font-size: 14px; line-height: 1.5; min-height: 100vh; }
+
+/* ══ SCREENS ══ */
+.screen { display: none; min-height: 100vh; }
+
+#screen-input { display: none; flex-direction: column; align-items: center; padding: 28px 16px 48px; background: var(--bg); }
+#screen-input.active { display: flex; }
+
+#screen-result { display: none; flex-direction: column; min-height: 100vh; background: var(--bg); }
+#screen-result.active { display: flex; }
+
+/* ══ INPUT CARD ══ */
+.input-card { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; box-shadow: 0 2px 12px rgba(0,0,0,0.07); width: 100%; max-width: 520px; overflow: hidden; }
+.input-card-header { background: var(--accent); padding: 22px 26px 18px; color: white; }
+.app-title { font-family: 'DM Serif Display', serif; font-size: 1.4rem; font-weight: 400; letter-spacing: 0.02em; margin-bottom: 2px; }
+.app-sub { font-size: 0.68rem; opacity: 0.7; letter-spacing: 0.1em; font-family: 'DM Mono', monospace; }
+.app-ver { font-size: 0.62rem; opacity: 0.55; font-family: 'DM Mono', monospace; margin-top: 4px; }
+.input-body { padding: 22px 26px; }
+
+/* Input sections */
+.input-section { margin-bottom: 18px; }
+.input-section-title { font-size: 0.6rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); margin-bottom: 9px; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+.input-section-title::after { content: ''; flex: 1; height: 1px; background: var(--border); }
+
+/* Numpad field */
+.nf { margin-bottom: 10px; }
+.nf-label { font-size: 0.71rem; color: var(--muted); margin-bottom: 4px; display: block; }
+.nf-display {
+  display: flex; align-items: center;
+  background: var(--surface); border: 1.5px solid var(--border2);
+  border-radius: 8px; padding: 8px 12px;
+  cursor: pointer; transition: border-color 0.15s; min-height: 40px;
+}
+.nf-display.active { border-color: var(--accent); background: var(--accent-lt); }
+.nf-display-val {
+  font-family: 'DM Mono', monospace; font-size: 1rem; font-weight: 500;
+  color: var(--ink); flex: 1;
+}
+.nf-display-val.empty { color: var(--muted2); }
+.nf-display-unit { font-size: 0.68rem; color: var(--muted); margin-left: 8px; flex-shrink: 0; font-family: 'DM Mono', monospace; }
+.nf-display-arrow { font-size: 0.55rem; color: var(--muted2); margin-left: 6px; transition: transform 0.15s; flex-shrink: 0; }
+.nf-display.active .nf-display-arrow { transform: rotate(180deg); }
+
+/* Numpad popup */
+.numpad-wrap { display: none; background: var(--surface); border: 1px solid var(--border2); border-radius: 12px; padding: 10px; margin-top: 5px; margin-bottom: 2px; box-shadow: 0 6px 20px rgba(0,0,0,0.12); }
+.numpad-wrap.open { display: block; }
+.numpad-input-row { display: flex; gap: 6px; margin-bottom: 8px; align-items: center; }
+.numpad-raw { flex: 1; font-family: 'DM Mono', monospace; font-size: 0.92rem; border: 1px solid var(--border); border-radius: 7px; padding: 7px 10px; color: var(--ink); background: var(--surface2); -moz-appearance: textfield; }
+.numpad-raw::-webkit-inner-spin-button { display: none; }
+.numpad-raw:focus { outline: none; border-color: var(--accent); }
+.numpad-unit-lbl { font-size: 0.7rem; color: var(--muted); white-space: nowrap; font-family: 'DM Mono', monospace; }
+
+/* Numpad sections */
+.numpad-section-label { font-size: 0.58rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--muted2); margin: 8px 0 5px; font-weight: 600; }
+.numpad-grid   { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.numpad-grid-3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5px; }
+
+/* Big value display inside pad */
+.numpad-val-display {
+  background: var(--surface2); border: 1.5px solid var(--accent);
+  border-radius: 8px; padding: 8px 12px; margin-bottom: 8px;
+  font-family: 'DM Mono', monospace; font-size: 1.2rem; font-weight: 700;
+  color: var(--ink); text-align: right; min-height: 42px;
+  display: flex; align-items: center; justify-content: flex-end; gap: 6px;
+}
+.numpad-val-display .nvd-main { flex: 1; text-align: right; }
+.numpad-val-display .nvd-main.zero { color: var(--muted2); font-weight: 400; font-size: 0.9rem; }
+.numpad-val-display .nvd-unit { font-size: 0.72rem; color: var(--muted); font-weight: 400; flex-shrink: 0; }
+
+/* Unit × buttons — apply to current value */
+.unit-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 5px; }
+.nk-unit {
+  border-radius: 7px; padding: 9px 3px; text-align: center;
+  font-family: 'DM Mono', monospace; font-weight: 700; font-size: 0.8rem;
+  cursor: pointer; user-select: none; transition: all 0.1s; line-height: 1.2;
+  border: 2px solid;
+}
+.nk-unit:active { transform: scale(0.95); }
+.nk-unit span.eg { font-size: 0.58rem; font-weight: 400; display: block; opacity: 0.7; margin-top: 2px; }
+.nk-unit.u100    { background: #f0fdf4; color: #15803d; border-color: #4ade80; }
+.nk-unit.u100:hover    { background: #dcfce7; }
+.nk-unit.u1000   { background: #eff6ff; color: #1d4ed8; border-color: #60a5fa; }
+.nk-unit.u1000:hover   { background: #dbeafe; }
+.nk-unit.u10000  { background: #fffbeb; color: #b45309; border-color: #fbbf24; }
+.nk-unit.u10000:hover  { background: #fef3c7; }
+.nk-unit.u1e6    { background: #fdf4ff; color: #7e22ce; border-color: #c084fc; }
+.nk-unit.u1e6:hover    { background: #f3e8ff; }
+
+.nk {
+  background: var(--surface2); border: 1px solid var(--border);
+  border-radius: 7px; padding: 9px 4px; text-align: center;
+  font-family: 'DM Mono', monospace; font-size: 0.88rem; font-weight: 500;
+  color: var(--ink); cursor: pointer; user-select: none; transition: all 0.1s; line-height: 1.2;
+}
+.nk:hover { background: var(--accent-lt); border-color: var(--accent); color: var(--accent); }
+.nk:active { transform: scale(0.96); background: #dbeafe; }
+.nk.del  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; font-size: 1rem; }
+.nk.del:hover { background: #fee2e2; }
+.nk.clr  { background: #fef2f2; color: #b91c1c; border-color: #fecaca; font-size: 0.75rem; }
+.nk.clr:hover { background: #fee2e2; }
+.nk.ok   { background: var(--accent); color: white; border-color: var(--accent); font-size: 0.88rem; font-weight: 600; }
+.nk.ok:hover { background: #1e40af; }
+.nk.yr   { background: var(--surface2); color: var(--muted); font-size: 0.78rem; }
+
+/* Slider */
+.sf { margin-bottom: 12px; }
+.sf-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px; }
+.sf-label { font-size: 0.71rem; color: var(--muted); }
+.sf-val { font-family: 'DM Mono', monospace; font-size: 0.88rem; font-weight: 500; color: var(--accent); background: var(--accent-lt); padding: 2px 8px; border-radius: 4px; }
+input[type="range"] { width: 100%; accent-color: var(--accent); cursor: pointer; display: block; }
+
+/* Presets */
+.presets-row { display: flex; gap: 6px; flex-wrap: wrap; }
+.preset-btn { background: var(--surface2); border: 1px solid var(--border2); border-radius: 6px; color: var(--muted); font-size: 0.7rem; font-family: 'DM Mono', monospace; padding: 5px 10px; cursor: pointer; transition: all 0.15s; }
+.preset-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+
+/* Run / Reset buttons */
+.run-btn { background: var(--accent); border: none; border-radius: 10px; color: white; font-family: 'Noto Sans JP', sans-serif; font-size: 0.95rem; font-weight: 600; padding: 14px; width: 100%; cursor: pointer; transition: background 0.2s; box-shadow: 0 4px 12px rgba(29,78,216,0.28); letter-spacing: 0.04em; }
+.run-btn:hover { background: #1e40af; }
+.run-btn:disabled { background: var(--border2); color: var(--muted2); cursor: not-allowed; box-shadow: none; }
+.reset-btn { background: none; border: 1.5px solid var(--border2); border-radius: 10px; color: var(--muted); font-family: 'Noto Sans JP', sans-serif; font-size: 0.82rem; padding: 10px; width: 100%; cursor: pointer; transition: all 0.2s; margin-top: 8px; }
+.reset-btn:hover { border-color: var(--red); color: var(--red); background: var(--red-lt); }
+.run-status { font-size: 0.68rem; color: var(--muted); text-align: center; margin-top: 6px; min-height: 16px; font-family: 'DM Mono', monospace; }
+
+/* ══ RESULT HEADER ══ */
+.result-header { background: var(--surface); border-bottom: 1px solid var(--border); padding: 12px 24px; display: flex; align-items: center; justify-content: space-between; position: sticky; top: 0; z-index: 10; box-shadow: 0 1px 6px rgba(0,0,0,0.06); flex-wrap: wrap; gap: 8px; }
+.rh-left {}
+.rh-title { font-family: 'DM Serif Display', serif; font-size: 1.1rem; color: var(--accent); }
+.rh-sub { font-size: 0.63rem; color: var(--muted); font-family: 'DM Mono', monospace; margin-top: 1px; }
+.rh-right { display: flex; gap: 8px; align-items: center; }
+.back-btn { background: var(--surface2); border: 1px solid var(--border2); border-radius: 8px; color: var(--muted); padding: 7px 13px; font-size: 0.78rem; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: all 0.15s; white-space: nowrap; }
+.back-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-lt); }
+.pdf-btn { background: #b91c1c; border: none; border-radius: 8px; color: white; padding: 7px 14px; font-size: 0.78rem; cursor: pointer; font-family: 'Noto Sans JP', sans-serif; transition: background 0.15s; white-space: nowrap; box-shadow: 0 2px 6px rgba(185,28,28,0.25); }
+.pdf-btn:hover { background: #991b1b; }
+.pdf-btn:disabled { background: var(--border2); color: var(--muted2); cursor: not-allowed; }
+
+.result-body { padding: 18px 22px 48px; max-width: 960px; margin: 0 auto; width: 100%; }
+
+/* Status bar */
+.status-bar { display: grid; grid-template-columns: repeat(auto-fit, minmax(120px,1fr)); gap: 8px; margin-bottom: 18px; padding: 13px 15px; background: var(--surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: 0 1px 4px rgba(0,0,0,0.05); }
+.sb-label { font-size: 0.6rem; color: var(--muted2); letter-spacing: 0.05em; text-transform: uppercase; margin-bottom: 2px; }
+.sb-val { font-family: 'DM Mono', monospace; font-size: 0.95rem; font-weight: 500; color: var(--ink); }
+.sb-val.profit { color: var(--green); }
+.sb-val.loss   { color: var(--red); }
+
+/* Tabs */
+.tab-bar { display: flex; border: 1px solid var(--border); border-radius: 12px; overflow: hidden; margin-bottom: 18px; background: var(--surface); box-shadow: 0 1px 4px rgba(0,0,0,0.04); }
+.tab-btn { flex: 1; padding: 12px 6px 8px; text-align: center; cursor: pointer; border-right: 1px solid var(--border); transition: background 0.15s; user-select: none; }
+.tab-btn:last-child { border-right: none; }
+.tab-btn .t-yr { font-family: 'DM Serif Display', serif; font-size: 1.4rem; color: var(--muted2); display: block; line-height: 1; }
+.tab-btn .t-label { font-size: 0.6rem; color: var(--muted2); display: block; margin-top: 2px; }
+.tab-btn .t-median { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--muted2); display: block; margin-top: 4px; }
+.tab-btn.active { background: var(--accent-lt); }
+.tab-btn.active .t-yr { color: var(--accent); }
+.tab-btn.active .t-label { color: var(--accent); }
+.tab-btn.active .t-median { color: var(--gold); }
+.tab-btn:hover:not(.active) { background: var(--surface2); }
+.panel { display: none; }
+.panel.active { display: block; }
+
+/* Section header */
+.sec-hd { font-size: 0.61rem; letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted); font-weight: 600; margin-bottom: 9px; }
+
+/* KPI */
+.kpi-row { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px,1fr)); gap: 7px; margin-bottom: 13px; }
+.kpi { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.kpi.hl-gold  { border-color: #f59e0b; border-width: 2px; background: var(--gold-lt); }
+.kpi.hl-blue  { border-color: var(--accent); border-width: 2px; background: var(--accent-lt); }
+.kpi.hl-green { border-color: #22c55e; border-width: 2px; background: var(--green-lt); }
+.kpi.hl-red   { border-color: #f87171; border-width: 2px; background: var(--red-lt); }
+.kpi-lbl { font-size: 0.63rem; color: var(--muted); margin-bottom: 3px; line-height: 1.4; }
+.kpi-val { font-family: 'DM Mono', monospace; font-size: 0.97rem; font-weight: 500; }
+.kpi-sub { font-family: 'DM Mono', monospace; font-size: 0.61rem; margin-top: 2px; }
+.c-green{color:var(--green);} .c-gold{color:var(--gold);} .c-blue{color:var(--accent);} .c-red{color:var(--red);} .c-muted{color:var(--muted);} .c-teal{color:var(--teal);} .c-purple{color:var(--purple);}
+
+/* Profit bands */
+.profit-bands { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; margin-bottom: 13px; overflow: hidden; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.pb-header { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr; border-bottom: 2px solid var(--border); }
+.pb-col { padding: 8px 7px; text-align: center; border-right: 1px solid var(--border); }
+.pb-col:last-child { border-right: none; }
+.pb-col.hd { background: var(--surface2); }
+.pb-col-lbl { font-size: 0.59rem; color: var(--muted); margin-bottom: 2px; line-height: 1.4; }
+.pb-col-val { font-family: 'DM Mono', monospace; font-size: 0.83rem; font-weight: 500; }
+.pb-col-sub { font-family: 'DM Mono', monospace; font-size: 0.59rem; margin-top: 2px; }
+.pb-band { display: grid; grid-template-columns: 1.3fr 1fr 1fr 1fr 1fr; border-bottom: 1px solid var(--border); }
+.pb-band:last-child { border-bottom: none; }
+.pb-band .pb-col { padding: 8px 7px; }
+.pb-band-label { font-size: 0.63rem; font-weight: 600; line-height: 1.4; }
+
+/* IRR */
+.irr-row { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px,1fr)); gap: 7px; margin-bottom: 13px; }
+.irr-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 11px 12px; text-align: center; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.irr-card.bg-gold-lt  { border-color: #fbbf24; background: var(--gold-lt); }
+.irr-card.bg-green-lt { border-color: #86efac; background: var(--green-lt); }
+.irr-card.bg-red-lt   { border-color: #fca5a5; background: var(--red-lt); }
+.irr-lbl { font-size: 0.61rem; color: var(--muted); margin-bottom: 4px; }
+.irr-val { font-family: 'DM Mono', monospace; font-size: 1.2rem; font-weight: 500; }
+.irr-sub { font-size: 0.59rem; color: var(--muted2); margin-top: 2px; }
+
+/* Charts */
+.chart-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+canvas { width: 100% !important; display: block; }
+
+/* Prob table */
+.prob-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 13px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+table { width: 100%; border-collapse: collapse; }
+th { font-family: 'DM Mono', monospace; font-size: 0.62rem; color: var(--muted); text-align: left; padding: 6px 8px; border-bottom: 2px solid var(--border); background: var(--surface2); letter-spacing: 0.03em; white-space: nowrap; }
+td { padding: 6px 8px; border-bottom: 1px solid var(--border); font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--ink); vertical-align: middle; }
+tr:last-child td { border-bottom: none; }
+tr:hover td { background: var(--surface2); }
+
+/* Prob bar */
+.prob-bar-wrap { width: 100%; }
+.prob-bar-outer { position: relative; height: 20px; background: #f1f5f9; border-radius: 5px; overflow: visible; width: 100%; }
+.prob-bar-inner { height: 100%; border-radius: 5px; min-width: 2px; }
+.prob-bar-pct { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); font-family: 'DM Mono', monospace; font-size: 0.71rem; font-weight: 700; white-space: nowrap; pointer-events: none; }
+.prob-bar-count { font-size: 0.59rem; color: var(--muted2); margin-top: 2px; text-align: center; font-family: 'DM Mono', monospace; }
+
+/* Prob table: スマホでは補助列を非表示 */
+.prob-col-sub { }
+@media (max-width: 540px) {
+  .prob-col-sub { display: none; }
+  .prob-card td, .prob-card th { padding: 6px 5px; font-size: 0.72rem; }
+  .prob-bar-pct { font-size: 0.68rem; }
+  .prob-bar-count { font-size: 0.56rem; }
+}
+
+/* Compare */
+.compare-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 13px 15px; margin-bottom: 18px; box-shadow: 0 1px 2px rgba(0,0,0,0.04); }
+.compare-scroll { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+.compare-scroll table { min-width: 380px; }
+
+/* Disclaimer */
+.disclaimer-box { background: #fffbeb; border: 1.5px solid #fbbf24; border-radius: 10px; padding: 16px 18px; margin-bottom: 14px; }
+.disclaimer-title { font-size: 0.74rem; font-weight: 700; color: #92400e; margin-bottom: 9px; display: flex; align-items: center; gap: 6px; letter-spacing: 0.04em; }
+.disclaimer-body { font-size: 0.76rem; color: #78350f; line-height: 1.9; }
+.disclaimer-body p { margin-bottom: 3px; }
+.disclaimer-body p:last-child { margin-bottom: 0; }
+
+/* Version footer */
+.ver-footer { text-align: center; font-size: 0.62rem; color: var(--muted2); font-family: 'DM Mono', monospace; padding: 12px 0 4px; letter-spacing: 0.08em; }
+
+@media (max-width: 580px) {
+  .input-body { padding: 18px 14px; }
+  .result-body { padding: 14px 12px 40px; }
+  .kpi-row { grid-template-columns: repeat(2, 1fr); }
+}
+</style>
+</head>
+<body>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 1: INPUT
+══════════════════════════════════════════ -->
+<div id="screen-input" class="screen active">
+  <div class="input-card">
+    <div class="input-card-header">
+      <div class="app-title">投資信託収益診断</div>
+      <div class="app-sub">MONTE CARLO SIMULATION</div>
+      <div class="app-ver">Ver 1.0</div>
+    </div>
+    <div class="input-body">
+
+      <div class="input-section">
+        <div class="input-section-title">📁 現在の資産状況</div>
+        <div id="nf-currentVal"></div>
+        <div id="nf-costBasis"></div>
+      </div>
+
+      <div class="input-section">
+        <div class="input-section-title">💴 積立設定</div>
+        <div id="nf-monthlyContrib"></div>
+        <div id="nf-contribYears"></div>
+      </div>
+
+      <div class="input-section">
+        <div class="input-section-title">📈 運用前提</div>
+        <div class="sf">
+          <div class="sf-row"><span class="sf-label">想定年率リターン</span><span class="sf-val" id="muVal">7.0%</span></div>
+          <input type="range" id="mu" min="1" max="30" step="0.5" value="7">
+        </div>
+        <div class="sf">
+          <div class="sf-row"><span class="sf-label">年率ボラティリティ（標準偏差）</span><span class="sf-val" id="volVal">15%</span></div>
+          <input type="range" id="vol" min="1" max="40" step="1" value="15">
+        </div>
+        <div class="sf">
+          <div class="sf-row"><span class="sf-label">シミュレーション回数</span><span class="sf-val" id="numSimVal">10,000</span></div>
+          <input type="range" id="numSim" min="1000" max="50000" step="1000" value="10000">
+        </div>
+      </div>
+
+      <div class="input-section">
+        <div class="input-section-title">⚡ 利回りプリセット（金額は変わりません）</div>
+        <div class="presets-row">
+          <button class="preset-btn" onclick="applyPreset('stable')">安定型<br><span style="font-size:0.58rem;opacity:0.7">5% / σ8%</span></button>
+          <button class="preset-btn" onclick="applyPreset('balanced')">バランス<br><span style="font-size:0.58rem;opacity:0.7">7% / σ12%</span></button>
+          <button class="preset-btn" onclick="applyPreset('growth')">成長型<br><span style="font-size:0.58rem;opacity:0.7">10% / σ18%</span></button>
+          <button class="preset-btn" onclick="applyPreset('aggressive')">積極型<br><span style="font-size:0.58rem;opacity:0.7">15% / σ25%</span></button>
+          <button class="preset-btn" onclick="applyPreset('dc')">DC年金<br><span style="font-size:0.58rem;opacity:0.7">7% / σ12%</span></button>
+          <button class="preset-btn" onclick="applyPreset('nisa')">NISA<br><span style="font-size:0.58rem;opacity:0.7">8% / σ15%</span></button>
+        </div>
+      </div>
+
+      <button class="run-btn" id="runBtn" onclick="runSim()">診断する →</button>
+      <button class="reset-btn" id="resetBtn" onclick="resetAll()">🗑 入力をすべてリセット</button>
+      <div id="resetConfirm" style="display:none;margin-top:8px;background:#fef2f2;border:1.5px solid #fca5a5;border-radius:10px;padding:12px 14px">
+        <div style="font-size:0.78rem;color:#b91c1c;margin-bottom:10px;font-weight:600">本当にすべてリセットしますか？</div>
+        <div style="display:flex;gap:8px">
+          <button onclick="doReset()" style="flex:1;background:#b91c1c;color:white;border:none;border-radius:7px;padding:9px;font-size:0.82rem;font-family:'Noto Sans JP',sans-serif;cursor:pointer;font-weight:600">リセットする</button>
+          <button onclick="cancelReset()" style="flex:1;background:white;color:#6b7280;border:1.5px solid #d1d5db;border-radius:7px;padding:9px;font-size:0.82rem;font-family:'Noto Sans JP',sans-serif;cursor:pointer">キャンセル</button>
+        </div>
+      </div>
+      <div class="run-status" id="runStatus"></div>
+    </div>
+  </div>
+  <div class="ver-footer">投資信託収益診断 Ver 1.0 — © 2025</div>
+</div>
+
+<!-- ══════════════════════════════════════════
+     SCREEN 2: RESULT
+══════════════════════════════════════════ -->
+<div id="screen-result" class="screen">
+  <div class="result-header">
+    <div class="rh-left">
+      <div class="rh-title">投資信託収益診断</div>
+      <div class="rh-sub">MONTE CARLO SIMULATION RESULT &nbsp;·&nbsp; Ver 1.0</div>
+    </div>
+    <div class="rh-right">
+      <button class="back-btn" onclick="goBack()">← 条件を変更</button>
+      <button class="pdf-btn" id="pdfBtn" onclick="exportPDF()">📄 PDF保存</button>
+    </div>
+  </div>
+  <div style="text-align:right;width:100%;padding:4px 24px 0;font-size:0.65rem;color:#b91c1c;font-family:'DM Mono',monospace;">
+    SafariではPDF保存できない場合があります。ChromeまたはPC推奨
+  </div>
+
+  <div class="result-body" id="resultBody">
+    <div class="status-bar" id="statusBar"></div>
+    <div id="tabsWrap"><div class="tab-bar" id="tabBar"></div></div>
+    <div id="panelsWrap"></div>
+    <div id="compareWrap">
+      <div class="compare-card">
+        <div class="sec-hd" style="margin-bottom:10px">📋 期間別比較サマリー</div>
+        <div class="compare-scroll">
+          <table><thead id="compareHead"></thead><tbody id="compareTbody"></tbody></table>
+        </div>
+      </div>
+    </div>
+    <div class="disclaimer-box">
+      <div class="disclaimer-title">⚠️ 免責事項</div>
+      <div class="disclaimer-body">
+        <p>本ツールの結果は、入力された数値および想定利回り等を基にしたシミュレーション結果です。</p>
+        <p>将来の投資成果や資産額を保証するものではありません。</p>
+        <p>投資判断はご自身の責任で行ってください。</p>
+      </div>
+    </div>
+    <div class="ver-footer">投資信託収益診断 Ver 1.0</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script>
+const { jsPDF } = window.jspdf;
+
+// ════════════════════════════════════════════
+// NUMPAD — 仕様書 Ver1.0 完全準拠
+//
+// 確定値 : nfState  （計算・結果表示に使う唯一の値）
+// 入力中 : nkBuf   （テンキー操作中だけ使う一時バッファ）
+//
+// commit（nkBuf→nfState）が呼ばれるのは以下4つのみ
+//   ① ✓確定ボタン
+//   ② 単位変換ボタン（× 百/千/万/百万）→ commit後テンキーを閉じる
+//   ③ 別フィールドを開くとき（前フィールドのcommit）
+//   ④ 診断ボタン押下時（runSimの冒頭）
+//
+// 外クリック・テンキーの開閉はcommitしない（値を変えない）
+// ════════════════════════════════════════════
+
+const NUMPAD_FIELDS = [
+  { id:'currentVal',    label:'現在の評価額',         unit:'円',    isInt:false },
+  { id:'costBasis',     label:'取得価格合計（コスト）', unit:'円',    isInt:false },
+  { id:'monthlyContrib',label:'月次積立額',            unit:'円/月', isInt:false },
+  { id:'contribYears',  label:'積立継続期間',          unit:'年',    isInt:true  },
+];
+
+// 確定値（唯一の真実）
+const nfState = { currentVal:0, costBasis:0, monthlyContrib:0, contribYears:0 };
+// 入力中バッファ（テンキー操作中のみ。nfStateを絶対に変えない）
+const nkBuf   = { currentVal:'', costBasis:'', monthlyContrib:'', contribYears:'' };
+// 現在開いているテンキーのフィールドID
+let openFieldId = null;
+
+// ── バッジ表示（フィールド上部の確定値表示）──
+function fmtBadge(id) {
+  const v = nfState[id] || 0;
+  if (!v) return '0';
+  const f = NUMPAD_FIELDS.find(x => x.id === id);
+  if (f.isInt) return v.toLocaleString();
+  const abs = Math.abs(v);
+  if (abs >= 1e8) return (abs/1e8).toFixed(2) + '億';
+  if (abs >= 1e4) return Math.round(abs/10000).toLocaleString() + '万';
+  return abs.toLocaleString();
+}
+
+function _refreshBadge(id) {
+  const el = document.getElementById('nfv-' + id);
+  if (!el) return;
+  el.textContent = fmtBadge(id);
+  el.classList.toggle('empty', !(nfState[id] || 0));
+}
+
+// ── テンキー内の大きな数値表示 ──
+// 入力中バッファがあればバッファ値を、なければ確定値を表示
+function _refreshBigNum(id) {
+  const el = document.getElementById('nvd-' + id);
+  if (!el) return;
+  const buf = nkBuf[id];
+  if (buf !== '') {
+    el.textContent = (parseInt(buf) || 0).toLocaleString();
+    el.classList.remove('zero');
+  } else {
+    const v = nfState[id] || 0;
+    el.textContent = v ? v.toLocaleString() : '0 （テンキーで入力）';
+    el.classList.toggle('zero', !v);
+  }
+}
+
+// ── commit: バッファが空でなければ確定値に反映 ──
+// 空バッファの場合は既存の確定値を絶対に変更しない
+function _commit(id) {
+  if (nkBuf[id] !== '') {
+    nfState[id] = parseInt(nkBuf[id]) || 0;
+    nkBuf[id] = '';
+    _refreshBadge(id);
+    _refreshBigNum(id);
+  }
+  // nkBuf[id] === '' の場合：何もしない（nfStateを保持）
+}
+
+// ── テンキーUIを開く（値は変えない）──
+function _openUI(id) {
+  document.getElementById('nfp-' + id)?.classList.add('open');
+  document.getElementById('nfd-' + id)?.classList.add('active');
+}
+
+// ── テンキーUIを閉じる（値は変えない）──
+function _closeUI(id) {
+  document.getElementById('nfp-' + id)?.classList.remove('open');
+  document.getElementById('nfd-' + id)?.classList.remove('active');
+}
+
+// ── フィールドをタップ ──
+function toggleNumpad(id) {
+  if (openFieldId === id) {
+    // 同じフィールドを再タップ → 閉じるだけ（commitしない）
+    _closeUI(id);
+    openFieldId = null;
+  } else {
+    // 別フィールドが開いていたら → ③ commitしてから閉じる
+    if (openFieldId && openFieldId !== id) {
+      _commit(openFieldId);   // ③ 別フィールドを開く前に前フィールドをcommit
+      _closeUI(openFieldId);
+    }
+    // 新しいフィールドを開く
+    openFieldId = id;
+    nkBuf[id] = '';           // 新規入力モード：バッファをリセット
+    _refreshBigNum(id);       // 確定値を大きな表示に出す
+    _openUI(id);
+  }
+}
+
+// ✓確定ボタン（① commit）
+function closeNumpad(id) {
+  _commit(id);    // ① ✓確定でcommit
+  _closeUI(id);
+  if (openFieldId === id) openFieldId = null;
+}
+
+// ── 数字キー：nkBufにのみ追記。nfStateは変えない ──
+function nkD(id, d) {
+  const cur = nkBuf[id];
+  let next = (cur === '') ? d : cur + d;
+  next = next.replace(/^0+(\d)/, '$1');
+  nkBuf[id] = next;
+  _refreshBigNum(id);
+  // nfStateは変えない
+}
+
+// ── ⌫削除：バッファがあればバッファを削る ──
+function nkDel(id) {
+  if (nkBuf[id] !== '') {
+    nkBuf[id] = nkBuf[id].length > 1 ? nkBuf[id].slice(0, -1) : '';
+  }
+  // バッファが空のとき：確定値は変えない
+  _refreshBigNum(id);
+}
+
+// ── C：バッファと確定値を0にする ──
+function nkClr(id) {
+  nkBuf[id] = '';
+  nfState[id] = 0;
+  _refreshBadge(id);
+  _refreshBigNum(id);
+}
+
+// ── 単位変換：バッファ × 単位 → バッファに反映（nfStateは変えない）──
+// 数字を入力してから単位を押すと「その数字 × 単位」がバッファに入る
+// 例: バッファ"1000" → ×万 → バッファ"10000000"（表示: 1,000万）
+// ✓確定ボタンを押したときに初めてnfStateに書き込まれる
+function applyMul(id, unit) {
+  const base = nkBuf[id] !== '' ? (parseInt(nkBuf[id]) || 0) : 0;
+  if (base > 0) {
+    nkBuf[id] = String(base * unit);
+  }
+  // base === 0 のとき（何も入力していない）は何もしない
+  _refreshBigNum(id);
+}
+
+// ── 年数クイック選択：nfStateに直接確定 ──
+function setVal(id, val) {
+  nkBuf[id] = '';
+  nfState[id] = val;
+  _refreshBadge(id);
+  _refreshBigNum(id);
+  _closeUI(id);
+  if (openFieldId === id) openFieldId = null;
+}
+
+// ── getVal：確定値をそのまま返す（バッファは無視）──
+function getVal(id) {
+  return nfState[id] || 0;
+}
+
+// ── プリセット・リセットから呼ぶ表示更新 ──
+function updateNfDisplay(id) {
+  nkBuf[id] = '';
+  _refreshBadge(id);
+  _refreshBigNum(id);
+}
+
+// ── 外クリック：UIを閉じるだけ。commitしない ──
+// （理由：外クリックは「キャンセル」に相当。入力途中の値を強制確定すべきでない）
+document.addEventListener('click', e => {
+  if (!openFieldId) return;
+  const pad  = document.getElementById('nfp-' + openFieldId);
+  const disp = document.getElementById('nfd-' + openFieldId);
+  if (pad?.contains(e.target) || disp?.contains(e.target)) return;
+  // 外クリック → UIを閉じるだけ（commitしない、nfStateを変えない）
+  _closeUI(openFieldId);
+  openFieldId = null;
+});
+
+// ── テンキーHTML構築 ──
+function buildNumpadFields() {
+  NUMPAD_FIELDS.forEach(f => {
+    const container = document.getElementById('nf-' + f.id);
+
+    const unitRow = f.isInt ? '' : `
+      <div class="numpad-section-label">単位 — 入力した数字に掛ける（✓確定で決定）</div>
+      <div class="unit-row">
+        <div class="nk-unit u100"   onclick="applyMul('${f.id}',100)">×百<span class="eg">7→700</span></div>
+        <div class="nk-unit u1000"  onclick="applyMul('${f.id}',1000)">×千<span class="eg">7→7千</span></div>
+        <div class="nk-unit u10000" onclick="applyMul('${f.id}',10000)">×万<span class="eg">7→7万</span></div>
+        <div class="nk-unit u1e6"   onclick="applyMul('${f.id}',1000000)">×百万<span class="eg">7→700万</span></div>
+      </div>`;
+
+    const yrRow = !f.isInt ? '' : `
+      <div class="numpad-section-label">年数を選ぶ（選択で即確定）</div>
+      <div class="numpad-grid-3">
+        ${[1,2,3,5,10,15,20,25,30].map(y =>
+          `<div class="nk yr" onclick="setVal('${f.id}',${y})">${y}年</div>`
+        ).join('')}
+      </div>`;
+
+    container.innerHTML = `
+      <div class="nf">
+        <label class="nf-label">${f.label}</label>
+        <div class="nf-display" id="nfd-${f.id}" onclick="toggleNumpad('${f.id}')">
+          <span class="nf-display-val empty" id="nfv-${f.id}">0</span>
+          <span class="nf-display-unit">${f.unit}</span>
+          <span class="nf-display-arrow">▼</span>
+        </div>
+        <div class="numpad-wrap" id="nfp-${f.id}">
+          <div class="numpad-val-display">
+            <span class="nvd-main zero" id="nvd-${f.id}">0 （テンキーで入力）</span>
+            <span class="nvd-unit">${f.unit}</span>
+          </div>
+          <div class="numpad-grid">
+            <div class="nk" onclick="nkD('${f.id}','7')">7</div>
+            <div class="nk" onclick="nkD('${f.id}','8')">8</div>
+            <div class="nk" onclick="nkD('${f.id}','9')">9</div>
+            <div class="nk del" onclick="nkDel('${f.id}')">⌫</div>
+            <div class="nk" onclick="nkD('${f.id}','4')">4</div>
+            <div class="nk" onclick="nkD('${f.id}','5')">5</div>
+            <div class="nk" onclick="nkD('${f.id}','6')">6</div>
+            <div class="nk clr" onclick="nkClr('${f.id}')">C</div>
+            <div class="nk" onclick="nkD('${f.id}','1')">1</div>
+            <div class="nk" onclick="nkD('${f.id}','2')">2</div>
+            <div class="nk" onclick="nkD('${f.id}','3')">3</div>
+            <div class="nk" style="font-size:0.78rem;color:var(--muted)" onclick="nkD('${f.id}','000')">000</div>
+            <div class="nk" style="grid-column:span 2" onclick="nkD('${f.id}','0')">0</div>
+            <div class="nk" onclick="nkD('${f.id}','00')">00</div>
+            <div class="nk" style="font-size:0.78rem;color:var(--muted)" onclick="nkD('${f.id}','0000')">0000</div>
+          </div>
+          ${unitRow}
+          ${yrRow}
+          <div style="margin-top:8px">
+            <div class="nk ok" onclick="closeNumpad('${f.id}')">✓ 確定</div>
+          </div>
+        </div>
+      </div>`;
+  });
+}
+
+// ════════════════════════════════════════════
+// PRESETS — 利回り・ボラティリティのみ（金額は上書きしない）
+// ════════════════════════════════════════════
+const PRESETS = {
+  stable:     { mu:5,  vol:8  },
+  balanced:   { mu:7,  vol:12 },
+  growth:     { mu:10, vol:18 },
+  aggressive: { mu:15, vol:25 },
+  dc:         { mu:7,  vol:12 },
+  nisa:       { mu:8,  vol:15 },
+};
+function applyPreset(k) {
+  const p = PRESETS[k];
+  // 利回りとボラティリティのみ変更。金額・年数は一切触らない
+  document.getElementById('mu').value    = p.mu;
+  document.getElementById('vol').value   = p.vol;
+  document.getElementById('muVal').textContent  = p.mu.toFixed(1) + '%';
+  document.getElementById('volVal').textContent = p.vol + '%';
+}
+
+// ════════════════════════════════════════════
+// HELPERS
+// ════════════════════════════════════════════
+function randn(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+function percentile(sorted,p){const idx=(p/100)*(sorted.length-1);const lo=Math.floor(idx),hi=Math.ceil(idx);return sorted[lo]+(sorted[hi]-sorted[lo])*(idx-lo);}
+function fmt(v){const abs=Math.abs(v),sign=v<0?'−':'';if(abs>=1e8)return sign+(abs/1e8).toFixed(2)+'億円';if(abs>=1e4)return sign+Math.round(abs/10000).toLocaleString()+'万円';return sign+Math.round(abs).toLocaleString()+'円';}
+function fmtPct(v,d=1){return(v>=0?'+':'')+v.toFixed(d)+'%';}
+function calcIRR(cashflows,guess=0.05){let r=guess;for(let i=0;i<300;i++){let npv=0,dnpv=0;for(const{t,cf}of cashflows){const d=Math.pow(1+r,t);npv+=cf/d;dnpv-=t*cf/Math.pow(1+r,t+1);}if(Math.abs(dnpv)<1e-14)break;const delta=npv/dnpv;r-=delta;if(Math.abs(delta)<1e-9)break;}return isFinite(r)&&r>-1?r:null;}
+function todayStr(){const d=new Date();return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';}
+function todayISO(){const d=new Date();return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+
+// ════════════════════════════════════════════
+// SIMULATION
+// ════════════════════════════════════════════
+let simResults=null, activeYr=null;
+const simPeriods=[5,10,15,20];
+
+function runSim() {
+  // ④ 診断ボタン押下時：全フィールドのバッファを確定（仕様書7章）
+  // 開いているテンキーがあればcommitして閉じる
+  if (openFieldId) {
+    _commit(openFieldId);
+    _closeUI(openFieldId);
+    openFieldId = null;
+  }
+  // 全フィールドのバッファを確定
+  NUMPAD_FIELDS.forEach(f => _commit(f.id));
+
+  const currentVal = getVal('currentVal');
+  const costBasis  = getVal('costBasis');
+  const monthlyC   = getVal('monthlyContrib');
+  const contribYrs = getVal('contribYears');
+  if(currentVal<=0 && costBasis<=0 && monthlyC<=0){
+    document.getElementById('runStatus').textContent='※ 数値を入力してください'; return;
+  }
+  const btn=document.getElementById('runBtn');
+  btn.disabled=true;
+  document.getElementById('runStatus').textContent='計算中...';
+  const muAnnual  = parseFloat(document.getElementById('mu').value)/100;
+  const volAnnual = parseFloat(document.getElementById('vol').value)/100;
+  const numSim    = parseInt(document.getElementById('numSim').value)||10000;
+  const maxYrs=20, maxMonths=maxYrs*12;
+  const mc=Array.from({length:maxMonths},(_,m)=>Math.floor(m/12)<contribYrs?monthlyC:0);
+  const cumulPrincipal=[];
+  let _c=currentVal;
+  for(let y=0;y<maxYrs;y++){for(let m=0;m<12;m++)_c+=mc[y*12+m];cumulPrincipal.push(_c);}
+  function totalCostAt(yr){return costBasis+mc.slice(0,yr*12).reduce((a,b)=>a+b,0);}
+  setTimeout(()=>{
+    const mMu=(1+muAnnual)**(1/12)-1, mVol=volAnnual/Math.sqrt(12), drift=mMu-0.5*mVol**2;
+    const allSnaps=Array.from({length:maxYrs},()=>new Float64Array(numSim));
+    for(let s=0;s<numSim;s++){
+      let v=currentVal;
+      for(let m=0;m<maxMonths;m++){v=v*Math.exp(drift+mVol*randn())+mc[m];if((m+1)%12===0)allSnaps[(m+1)/12-1][s]=v;}
+    }
+    simResults={};
+    for(const yr of simPeriods){
+      const sorted=Array.from(allSnaps[yr-1]).sort((a,b)=>a-b);
+      const paths={p10:[],p25:[],p50:[],p75:[],p90:[]};
+      for(let yi=0;yi<yr;yi++){
+        const ys=Array.from(allSnaps[yi]).sort((a,b)=>a-b);
+        for(const[k,p]of[['p10',10],['p25',25],['p50',50],['p75',75],['p90',90]])paths[k].push(percentile(ys,p));
+      }
+      const tCost=totalCostAt(yr), cPrin=cumulPrincipal[yr-1];
+      function irrFor(fv){const cfs=[{t:0,cf:-Math.max(currentVal,1)}];for(let y=0;y<Math.min(yr,contribYrs);y++)cfs.push({t:y+0.5,cf:-monthlyC*12});cfs.push({t:yr,cf:fv});return calcIRR(cfs);}
+      const p50v=percentile(sorted,50),p10v=percentile(sorted,10),p90v=percentile(sorted,90),meanV=sorted.reduce((a,b)=>a+b,0)/sorted.length;
+      simResults[yr]={sorted,paths,yr,tCost,cPrin,irr:{p50:irrFor(p50v),p10:irrFor(p10v),p90:irrFor(p90v),mean:irrFor(meanV)}};
+    }
+    simResults._params={currentVal,costBasis,monthlyC,contribYrs,muAnnual,volAnnual,numSim,cumulPrincipal,totalCostAt};
+    renderAll();
+    btn.disabled=false;
+    document.getElementById('runStatus').textContent='';
+    showScreen('screen-result');
+  },30);
+}
+
+// ════════════════════════════════════════════
+// RENDER ALL
+// ════════════════════════════════════════════
+function renderAll(){
+  const p=simResults._params;
+  const unreal=p.currentVal-p.costBasis, uRoi=p.costBasis>0?(unreal/p.costBasis*100):0;
+  document.getElementById('statusBar').innerHTML=`
+    <div><div class="sb-label">現在の評価額</div><div class="sb-val">${fmt(p.currentVal)}</div></div>
+    <div><div class="sb-label">取得価格合計</div><div class="sb-val">${fmt(p.costBasis)}</div></div>
+    <div><div class="sb-label">現在の含み益</div><div class="sb-val ${unreal>=0?'profit':'loss'}">${unreal>=0?'+':''}${fmt(unreal)}</div></div>
+    <div><div class="sb-label">含み益率</div><div class="sb-val ${uRoi>=0?'profit':'loss'}">${fmtPct(uRoi)}</div></div>
+    <div><div class="sb-label">月次積立 × 継続</div><div class="sb-val">${fmt(p.monthlyC)}/月 × ${p.contribYrs}年</div></div>
+    <div><div class="sb-label">積立総額（予定）</div><div class="sb-val">${fmt(p.costBasis+p.monthlyC*12*p.contribYrs)}</div></div>`;
+  const tabBar=document.getElementById('tabBar'); tabBar.innerHTML='';
+  for(const yr of simPeriods){
+    const med=percentile(simResults[yr].sorted,50);
+    const btn=document.createElement('div');
+    btn.className='tab-btn'+(yr===simPeriods[0]?' active':'');
+    btn.dataset.yr=yr;
+    btn.innerHTML=`<span class="t-yr">${yr}年</span><span class="t-label">後の予測</span><span class="t-median">中央値 ${fmt(med)}</span>`;
+    btn.onclick=()=>switchTab(yr);
+    tabBar.appendChild(btn);
+  }
+  const wrap=document.getElementById('panelsWrap'); wrap.innerHTML='';
+  for(const yr of simPeriods){
+    const div=document.createElement('div');
+    div.id=`panel-${yr}`; div.className='panel'+(yr===simPeriods[0]?' active':'');
+    wrap.appendChild(div); buildPanel(yr);
+  }
+  buildCompare();
+  activeYr=simPeriods[0];
+}
+
+// ════════════════════════════════════════════
+// BUILD PANEL
+// ════════════════════════════════════════════
+function buildPanel(yr){
+  const d=simResults[yr], p=simResults._params;
+  const {sorted,paths,tCost,cPrin,irr}=d;
+  const pBest=percentile(sorted,95),pOpt=percentile(sorted,90),pAbove=percentile(sorted,75);
+  const pMed=percentile(sorted,50),pBelow=percentile(sorted,25),pPess=percentile(sorted,10),pWorst=percentile(sorted,5);
+  const mean=sorted.reduce((a,b)=>a+b,0)/sorted.length;
+  const lossRate=(sorted.filter(v=>v<tCost).length/sorted.length*100).toFixed(1);
+  function roiOf(v,base){return base>0?(v-base)/base*100:0;}
+  const pEl=document.getElementById(`panel-${yr}`); pEl.innerHTML='';
+
+  pEl.innerHTML+=`
+  <div class="sec-hd">📊 ${yr}年後 想定資産額</div>
+  <div class="kpi-row">
+    <div class="kpi hl-gold"><div class="kpi-lbl">中央値</div><div class="kpi-val c-gold">${fmt(pMed)}</div><div class="kpi-sub c-muted">全体の真ん中</div></div>
+    <div class="kpi hl-blue"><div class="kpi-lbl">期待値（平均）</div><div class="kpi-val c-blue">${fmt(mean)}</div><div class="kpi-sub c-muted">全シナリオ平均</div></div>
+    <div class="kpi hl-green"><div class="kpi-lbl">楽観シナリオ</div><div class="kpi-val c-green">${fmt(pOpt)}</div><div class="kpi-sub c-muted">上位10%</div></div>
+    <div class="kpi hl-red"><div class="kpi-lbl">悲観シナリオ</div><div class="kpi-val c-red">${fmt(pPess)}</div><div class="kpi-sub c-muted">下位10%</div></div>
+    <div class="kpi"><div class="kpi-lbl">やや楽観</div><div class="kpi-val c-teal">${fmt(pAbove)}</div><div class="kpi-sub c-muted">上位25%</div></div>
+    <div class="kpi"><div class="kpi-lbl">やや悲観</div><div class="kpi-val c-purple">${fmt(pBelow)}</div><div class="kpi-sub c-muted">下位25%</div></div>
+    <div class="kpi"><div class="kpi-lbl">最良シナリオ</div><div class="kpi-val c-green">${fmt(pBest)}</div><div class="kpi-sub c-muted">上位5%</div></div>
+    <div class="kpi"><div class="kpi-lbl">最悪シナリオ</div><div class="kpi-val c-red">${fmt(pWorst)}</div><div class="kpi-sub c-muted">下位5%</div></div>
+  </div>
+  <div class="kpi-row" style="margin-bottom:14px">
+    <div class="kpi"><div class="kpi-lbl">購入額を下回る確率</div><div class="kpi-val ${parseFloat(lossRate)>20?'c-red':'c-muted'}">${lossRate}%</div><div class="kpi-sub c-muted">購入金額＋積立合計より少なくなる確率</div></div>
+    <div class="kpi"><div class="kpi-lbl">購入金額＋積立合計</div><div class="kpi-val c-muted">${fmt(tCost)}</div><div class="kpi-sub c-muted">最初に買った金額＋今後の積立</div></div>
+    <div class="kpi"><div class="kpi-lbl">全部入れた金額</div><div class="kpi-val c-muted">${fmt(cPrin)}</div><div class="kpi-sub c-muted">現在の評価額＋今後の積立</div></div>
+  </div>`;
+
+  function bandRow(label,base,vals){
+    const cells=vals.map(v=>{const profit=v-base,roi=roiOf(v,base),c=profit>=0?'c-green':'c-red';return`<div class="pb-col"><div class="pb-col-val ${c}">${profit>=0?'+':''}${fmt(profit)}</div><div class="pb-col-sub ${c}">${fmtPct(roi)}</div></div>`;}).join('');
+    return`<div class="pb-band"><div class="pb-col" style="background:var(--surface2)"><div class="pb-band-label">${label}</div><div class="pb-col-sub c-muted">${fmt(base)}</div></div>${cells}</div>`;
+  }
+
+  // Plain-language profit explanations
+  const profitNote = (base, label) => {
+    const v = nfState['currentVal']||0, mc = nfState['monthlyContrib']||0, cy = nfState['contribYears']||0;
+    return label;
+  };
+
+  pEl.innerHTML+=`
+  <div class="sec-hd">💰 ${yr}年後の利益（3つの見方）</div>
+  <div style="background:var(--accent-lt);border:1px solid #bfdbfe;border-radius:8px;padding:11px 13px;margin-bottom:10px;font-size:0.75rem;line-height:1.8;color:#1e3a8a">
+    <b>① 購入時からの利益</b>　最初に買った金額＋その後の積立合計 に対して、最終的にいくら増えたか<br>
+    <b>② 今日からの利益</b>　現在の評価額を基準に、そこからさらにいくら増えるか（今後の伸び）<br>
+    <b>③ 全部入れた金額からの利益</b>　現在の評価額＋これから積み立てる金額の合計 に対していくら増えるか
+  </div>
+  <div class="profit-bands" style="margin-bottom:14px">
+    <div class="pb-header">
+      <div class="pb-col hd"><div class="pb-col-lbl">比較の基準</div></div>
+      <div class="pb-col hd"><div class="pb-col-lbl">悲観</div><div class="pb-col-sub">${fmt(pPess)}</div></div>
+      <div class="pb-col hd"><div class="pb-col-lbl">中央値</div><div class="pb-col-sub">${fmt(pMed)}</div></div>
+      <div class="pb-col hd"><div class="pb-col-lbl">平均</div><div class="pb-col-sub">${fmt(mean)}</div></div>
+      <div class="pb-col hd"><div class="pb-col-lbl">楽観</div><div class="pb-col-sub">${fmt(pOpt)}</div></div>
+    </div>
+    ${bandRow(`① 購入時からの利益<br><span style="font-size:0.57rem;font-weight:400;color:var(--muted2)">購入金額＋積立合計 ${fmt(tCost)}</span>`,tCost,[pPess,pMed,mean,pOpt])}
+    ${bandRow(`② 今日からの利益<br><span style="font-size:0.57rem;font-weight:400;color:var(--muted2)">現在の評価額 ${fmt(p.currentVal)} からの伸び</span>`,p.currentVal,[pPess,pMed,mean,pOpt])}
+    ${bandRow(`③ 全投資額からの利益<br><span style="font-size:0.57rem;font-weight:400;color:var(--muted2)">評価額＋今後の積立 ${fmt(cPrin)}</span>`,cPrin,[pPess,pMed,mean,pOpt])}
+  </div>`;
+
+  function irrHtml(label,val,cls){
+    if(val===null)return`<div class="irr-card ${cls}"><div class="irr-lbl">${label}</div><div class="irr-val c-muted">—</div><div class="irr-sub">計算不可</div></div>`;
+    const c=val>=0?'c-green':'c-red';
+    return`<div class="irr-card ${cls}"><div class="irr-lbl">${label}</div><div class="irr-val ${c}">${fmtPct(val*100,2)}</div><div class="irr-sub">内部収益率（年率換算）</div></div>`;
+  }
+  pEl.innerHTML+=`
+  <div class="sec-hd">📈 IRR（内部収益率）</div>
+  <div class="irr-row" style="margin-bottom:14px">
+    ${irrHtml('中央値シナリオ',irr.p50,'bg-gold-lt')}
+    ${irrHtml('平均シナリオ',irr.mean,'')}
+    ${irrHtml('楽観シナリオ',irr.p90,'bg-green-lt')}
+    ${irrHtml('悲観シナリオ',irr.p10,'bg-red-lt')}
+  </div>`;
+
+  pEl.innerHTML+=`
+  <div class="chart-card"><div class="sec-hd">分布 — 赤：購入額を下回る　黄：まだ回復途中　青：購入額より増えている</div><canvas id="hist-${yr}" height="185"></canvas></div>
+  <div class="chart-card"><div class="sec-hd">年次推移 ― 資産額の見通し</div><canvas id="path-${yr}" height="215"></canvas></div>
+  <div class="chart-card"><div class="sec-hd">年次推移 ― 購入金額からの利益</div><canvas id="profit-${yr}" height="205"></canvas></div>`;
+
+  const targets=genTargets(pMed,p.currentVal,tCost);
+  let trows='';
+  targets.forEach(t=>{
+    const above=sorted.filter(v=>v>=t).length;
+    const prob=(above/sorted.length*100).toFixed(1);
+    const profitC=t-tCost,profitN=t-p.currentVal,roiFull=(profitC/tCost*100).toFixed(0);
+    const pNum=parseFloat(prob);
+    const pc=pNum>70?'#15803d':pNum>40?'#b45309':'#b91c1c';
+    const profc=profitC>=0?'#15803d':'#b91c1c';
+    trows+=`<tr>
+      <td style="font-weight:600;white-space:nowrap">${fmt(t)}</td>
+      <td class="prob-col-sub" style="color:${profc};white-space:nowrap">${profitC>=0?'+':''}${fmt(profitC)}</td>
+      <td class="prob-col-sub" style="color:${profc};white-space:nowrap">${profitC>=0?'+':''}${roiFull}%</td>
+      <td class="prob-col-sub" style="color:${pNum>50?'#15803d':'#b45309'};white-space:nowrap">${profitN>=0?'+':''}${fmt(profitN)}</td>
+      <td>
+        <div class="prob-bar-wrap">
+          <div class="prob-bar-outer">
+            <div class="prob-bar-inner" style="width:${pNum}%;background:${pc}"></div>
+            <div class="prob-bar-pct" style="color:${pc}">${prob}%</div>
+          </div>
+          <div class="prob-bar-count">${above.toLocaleString()} / ${sorted.length.toLocaleString()}件</div>
+        </div>
+      </td>
+    </tr>`;
+  });
+  pEl.innerHTML+=`
+  <div class="prob-card">
+    <div class="sec-hd">目標金額達成確率</div>
+    <table><thead><tr>
+      <th>目標金額</th>
+      <th class="prob-col-sub">購入時からの利益</th>
+      <th class="prob-col-sub">利益率</th>
+      <th class="prob-col-sub">今日からの増加</th>
+      <th>達成確率</th>
+    </tr></thead>
+    <tbody>${trows}</tbody></table>
+  </div>`;
+
+  requestAnimationFrame(()=>{
+    drawHist(`hist-${yr}`,sorted,tCost,p.currentVal);
+    drawLinePath(`path-${yr}`,paths,215,yr,undefined);
+    const pp={};
+    for(const k of['p10','p25','p50','p75','p90'])pp[k]=paths[k].map((v,i)=>v-simResults._params.totalCostAt(i+1));
+    drawLinePath(`profit-${yr}`,pp,205,yr,0);
+  });
+}
+
+function genTargets(p50,cur,tCost){
+  const base=Math.max(p50,cur,tCost,1);
+  const step=Math.pow(10,Math.floor(Math.log10(base/5)));
+  const raw=new Set();
+  for(let m=1;m<=30;m++){const v=Math.round(step*m/10000)*10000;if(v>0)raw.add(v);}
+  raw.add(Math.round(tCost/100000)*100000); raw.add(Math.round(cur/100000)*100000);
+  const arr=[...raw].filter(v=>v>0).sort((a,b)=>a-b);
+  if(arr.length<=12)return arr;
+  const out=[arr[0]], s2=Math.floor((arr.length-1)/10);
+  for(let i=s2;i<arr.length-1;i+=s2)out.push(arr[i]);
+  out.push(arr[arr.length-1]); return out;
+}
+
+function buildCompare(){
+  const head=document.getElementById('compareHead'),tbody=document.getElementById('compareTbody');
+  head.innerHTML=`<tr><th>指標</th>${simPeriods.map(y=>`<th style="text-align:right">${y}年後</th>`).join('')}</tr>`;
+  const rows=[
+    ['中央値',              yr=>fmt(percentile(simResults[yr].sorted,50))],
+    ['期待値（平均）',       yr=>fmt(simResults[yr].sorted.reduce((a,b)=>a+b,0)/simResults[yr].sorted.length)],
+    ['楽観シナリオ',        yr=>fmt(percentile(simResults[yr].sorted,90))],
+    ['悲観シナリオ',        yr=>fmt(percentile(simResults[yr].sorted,10))],
+    ['全投資額（評価＋積立）',yr=>fmt(simResults[yr].cPrin)],
+    ['購入金額＋積立合計',   yr=>fmt(simResults[yr].tCost)],
+    ['中央値の利益<br><small>購入時からの合計利益</small>',yr=>{const v=percentile(simResults[yr].sorted,50),pr=v-simResults[yr].tCost;return`<span style="color:${pr>=0?'#15803d':'#b91c1c'}">${pr>=0?'+':''}${fmt(pr)}</span>`;}],
+    ['中央値の利益率',       yr=>{const v=percentile(simResults[yr].sorted,50),pr=v-simResults[yr].tCost,r=(pr/simResults[yr].tCost*100).toFixed(1);return`<span style="color:${pr>=0?'#15803d':'#b91c1c'}">${pr>=0?'+':''}${r}%</span>`;}],
+    ['年率換算リターン（IRR）',yr=>{const r=simResults[yr].irr.p50;return r!==null?`<span style="color:${r>=0?'#15803d':'#b91c1c'}">${fmtPct(r*100,2)}</span>`:'—';}],
+    ['元本を下回る確率',     yr=>{const n=simResults[yr].sorted.length,loss=simResults[yr].sorted.filter(v=>v<simResults[yr].tCost).length,pp=(loss/n*100).toFixed(1);return`<span style="color:${parseFloat(pp)>20?'#b91c1c':'#6b7280'}">${pp}%</span>`;}],
+  ];
+  tbody.innerHTML=rows.map(([label,fn])=>`<tr><td style="font-weight:500;color:var(--muted)">${label}</td>${simPeriods.map(yr=>`<td style="text-align:right">${fn(yr)}</td>`).join('')}</tr>`).join('');
+}
+
+function switchTab(yr){
+  activeYr=yr;
+  document.querySelectorAll('.tab-btn').forEach(t=>t.classList.toggle('active',parseInt(t.dataset.yr)===yr));
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  const panel=document.getElementById(`panel-${yr}`);
+  if(panel){
+    panel.classList.add('active');
+    if(simResults){
+      const d=simResults[yr],p=simResults._params;
+      requestAnimationFrame(()=>{
+        drawHist(`hist-${yr}`,d.sorted,d.tCost,p.currentVal);
+        drawLinePath(`path-${yr}`,d.paths,215,yr,undefined);
+        const pp={};
+        for(const k of['p10','p25','p50','p75','p90'])pp[k]=d.paths[k].map((v,i)=>v-p.totalCostAt(i+1));
+        drawLinePath(`profit-${yr}`,pp,205,yr,0);
+      });
+    }
+  }
+}
+
+// ════════════════════════════════════════════
+// HISTOGRAM
+// ════════════════════════════════════════════
+function drawHist(id,sorted,costBasis,currentVal){
+  const canvas=document.getElementById(id);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;const W=canvas.parentElement.clientWidth-26;const H=185;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const BINS=60,mn=sorted[0],mx=sorted[sorted.length-1],bW=(mx-mn)||1;
+  const counts=new Array(BINS).fill(0);
+  sorted.forEach(v=>{let b=Math.min(Math.floor((v-mn)/bW*BINS),BINS-1);counts[b]++;});
+  const maxC=Math.max(...counts);
+  const PAD={l:62,r:12,t:18,b:34};const pw=W-PAD.l-PAD.r,ph=H-PAD.t-PAD.b;
+  ctx.fillStyle='#fafbfc';ctx.fillRect(0,0,W,H);
+  for(let i=0;i<=4;i++){const y=PAD.t+ph*i/4;ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+pw,y);ctx.stroke();}
+  const bw=pw/BINS;
+  counts.forEach((c,i)=>{
+    const mid=mn+(i+0.5)/BINS*bW,ratio=c/maxC,bh=ratio*ph;
+    ctx.fillStyle=mid<costBasis?`rgba(185,28,28,${0.2+0.55*ratio})`:mid<currentVal?`rgba(180,83,9,${0.2+0.55*ratio})`:`rgba(29,78,216,${0.18+0.55*ratio})`;
+    ctx.fillRect(PAD.l+i*bw+0.5,PAD.t+ph-bh,bw-1,bh);
+  });
+  [{val:costBasis,col:'#b91c1c',lbl:'取得価格'},{val:currentVal,col:'#b45309',lbl:'現在値'}].forEach(({val,col,lbl})=>{
+    if(val<=mn||val>=mx)return;
+    const x=PAD.l+((val-mn)/bW)*pw;
+    ctx.strokeStyle=col;ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.beginPath();ctx.moveTo(x,PAD.t);ctx.lineTo(x,PAD.t+ph);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=col;ctx.font='bold 8px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(lbl,x,PAD.t+10);
+  });
+  [{p:10,c:'#dc2626',l:'悲観'},{p:50,c:'#d97706',l:'中央値'},{p:90,c:'#059669',l:'楽観'}].forEach(({p,c,l})=>{
+    const val=percentile(sorted,p),x=PAD.l+((val-mn)/bW)*pw;
+    ctx.strokeStyle=c;ctx.lineWidth=2;ctx.setLineDash([4,3]);ctx.beginPath();ctx.moveTo(x,PAD.t+15);ctx.lineTo(x,PAD.t+ph);ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=c;ctx.font='bold 8px DM Mono,monospace';ctx.textAlign='center';ctx.fillText(l,x,PAD.t+25);
+  });
+  ctx.strokeStyle='#d1d5db';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD.l,PAD.t+ph);ctx.lineTo(PAD.l+pw,PAD.t+ph);ctx.stroke();ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+ph);ctx.stroke();
+  ctx.fillStyle='#6b7280';ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+  for(let i=0;i<=5;i++)ctx.fillText(fmt(mn+bW*i/5),PAD.l+i*pw/5,H-4);
+  ctx.textAlign='right';for(let i=0;i<=4;i++)ctx.fillText(Math.round(maxC*i/4).toLocaleString(),PAD.l-3,PAD.t+ph*(1-i/4)+4);
+}
+
+// ════════════════════════════════════════════
+// LINE PATH
+// ════════════════════════════════════════════
+function drawLinePath(id,paths,H,numYrs,zeroLine){
+  const canvas=document.getElementById(id);if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;const W=canvas.parentElement.clientWidth-26;
+  canvas.width=W*dpr;canvas.height=H*dpr;canvas.style.width=W+'px';canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');ctx.scale(dpr,dpr);
+  const allV=[...paths.p10,...paths.p90];if(zeroLine!==undefined)allV.push(zeroLine);
+  const minV=Math.min(...allV),maxV=Math.max(...allV),span=(maxV-minV)||1;
+  const PAD={l:68,r:46,t:13,b:28};const pw=W-PAD.l-PAD.r,ph=H-PAD.t-PAD.b;const N=numYrs;
+  ctx.fillStyle='#fafbfc';ctx.fillRect(0,0,W,H);
+  function xOf(i){return PAD.l+(i/(Math.max(N-1,1)))*pw;}
+  function yOf(v){return PAD.t+ph-((v-minV)/span)*ph;}
+  for(let i=0;i<=4;i++){const y=PAD.t+ph*i/4;ctx.strokeStyle='#e5e7eb';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD.l,y);ctx.lineTo(PAD.l+pw,y);ctx.stroke();}
+  if(zeroLine!==undefined){const yz=yOf(zeroLine);ctx.strokeStyle='#9ca3af';ctx.lineWidth=1.2;ctx.setLineDash([6,4]);ctx.beginPath();ctx.moveTo(PAD.l,yz);ctx.lineTo(PAD.l+pw,yz);ctx.stroke();ctx.setLineDash([]);ctx.fillStyle='#6b7280';ctx.font='8px DM Mono,monospace';ctx.textAlign='left';ctx.fillText('損益ゼロ',PAD.l+3,yz-3);}
+  ctx.beginPath();paths.p10.forEach((v,i)=>i===0?ctx.moveTo(xOf(i),yOf(v)):ctx.lineTo(xOf(i),yOf(v)));[...paths.p90].reverse().forEach((v,i)=>ctx.lineTo(xOf(N-1-i),yOf(v)));ctx.closePath();ctx.fillStyle='rgba(29,78,216,0.06)';ctx.fill();
+  ctx.beginPath();paths.p25.forEach((v,i)=>i===0?ctx.moveTo(xOf(i),yOf(v)):ctx.lineTo(xOf(i),yOf(v)));[...paths.p75].reverse().forEach((v,i)=>ctx.lineTo(xOf(N-1-i),yOf(v)));ctx.closePath();ctx.fillStyle='rgba(29,78,216,0.10)';ctx.fill();
+  const specs=[{key:'p90',color:'#15803d',w:2,dash:[],lbl:'楽観'},{key:'p75',color:'#0f766e',w:1.5,dash:[4,3],lbl:'やや楽観'},{key:'p50',color:'#b45309',w:2.5,dash:[],lbl:'中央値'},{key:'p25',color:'#6d28d9',w:1.5,dash:[4,3],lbl:'やや悲観'},{key:'p10',color:'#b91c1c',w:2,dash:[],lbl:'悲観'}];
+  specs.forEach(({key,color,w,dash,lbl})=>{
+    const data=paths[key];ctx.strokeStyle=color;ctx.lineWidth=w;ctx.setLineDash(dash);ctx.beginPath();data.forEach((v,i)=>i===0?ctx.moveTo(xOf(i),yOf(v)):ctx.lineTo(xOf(i),yOf(v)));ctx.stroke();ctx.setLineDash([]);
+    ctx.fillStyle=color;ctx.font='bold 9px DM Mono,monospace';ctx.textAlign='left';ctx.fillText(lbl,xOf(N-1)+5,yOf(data[N-1])+4);
+  });
+  ctx.strokeStyle='#d1d5db';ctx.lineWidth=1;ctx.beginPath();ctx.moveTo(PAD.l,PAD.t);ctx.lineTo(PAD.l,PAD.t+ph);ctx.lineTo(PAD.l+pw,PAD.t+ph);ctx.stroke();
+  ctx.fillStyle='#6b7280';ctx.font='9px DM Mono,monospace';ctx.textAlign='center';
+  const step=Math.max(1,Math.floor(N/8));for(let i=0;i<N;i++){const y=i+1;if(y===1||y%step===0||y===N)ctx.fillText(y+'年',xOf(i),H-2);}
+  ctx.textAlign='right';for(let i=0;i<=4;i++){const v=minV+span*i/4;ctx.fillStyle='#6b7280';ctx.fillText(fmt(v),PAD.l-4,yOf(v)+4);}
+}
+
+// ════════════════════════════════════════════
+// SLIDER EVENTS
+// ════════════════════════════════════════════
+document.getElementById('mu').addEventListener('input',function(){document.getElementById('muVal').textContent=parseFloat(this.value).toFixed(1)+'%';});
+document.getElementById('vol').addEventListener('input',function(){document.getElementById('volVal').textContent=this.value+'%';});
+document.getElementById('numSim').addEventListener('input',function(){document.getElementById('numSimVal').textContent=Number(this.value).toLocaleString();});
+
+// ════════════════════════════════════════════
+// PDF EXPORT — 5ページ構成
+// P1: ヘッダー＋入力条件＋5年後＋10年後（数値）
+// P2: 15年後＋20年後（数値）
+// P3: 5年・10年 グラフ（資産推移・利益推移）
+// P4: 15年・20年 グラフ
+// P5: 期間別比較＋免責事項
+// ════════════════════════════════════════════
+async function exportPDF() {
+  if (!simResults) return;
+  const btn = document.getElementById('pdfBtn');
+  btn.disabled = true; btn.textContent = '📄 作成中...';
+
+  const p     = simResults._params;
+  const today = todayStr();
+  const iso   = todayISO();
+
+  function irrStr(v) { return v !== null ? fmtPct(v*100, 2) : '—'; }
+
+  const BASE = 'position:fixed;top:-9999px;left:0;width:794px;background:#fff;' +
+               'font-family:"Noto Sans JP",sans-serif;font-size:12px;color:#111;' +
+               'line-height:1.5;padding:28px 36px 28px;box-sizing:border-box;';
+  const BH = 'background:#1d4ed8;color:#fff;padding:6px 12px;font-size:13px;font-weight:bold;margin-bottom:0;';
+  const GH = 'background:#f3f4f6;padding:6px 10px;font-weight:bold;font-size:11px;color:#555;white-space:nowrap;';
+  const VR = 'padding:6px 10px;font-size:12px;text-align:right;white-space:nowrap;border-bottom:1px solid #e5e7eb;';
+  const G  = 'color:#15803d;';
+  const R  = 'color:#b91c1c;';
+
+  function yrBlock(yr) {
+    const d = simResults[yr];
+    const { sorted, irr, tCost, cPrin } = d;
+    const pMed = percentile(sorted, 50);
+    const pOpt = percentile(sorted, 90);
+    const pPes = percentile(sorted, 10);
+    const mean = sorted.reduce((a,b)=>a+b,0) / sorted.length;
+    const loss = (sorted.filter(v=>v<tCost).length / sorted.length * 100).toFixed(1);
+    const prof = pMed - tCost;
+    return `
+      <div style="${BH};margin-top:14px">${yr}年後 シミュレーション結果</div>
+      <table style="width:100%;border-collapse:collapse">
+        <tr>
+          <td style="${GH};width:24%">中央値</td><td style="${VR};font-weight:bold;font-size:13px">${fmt(pMed)}</td>
+          <td style="${GH};width:24%">期待値（平均）</td><td style="${VR}">${fmt(mean)}</td>
+        </tr><tr>
+          <td style="${GH}">楽観（上位10%）</td><td style="${VR}${G}">${fmt(pOpt)}</td>
+          <td style="${GH}">悲観（下位10%）</td><td style="${VR}${R}">${fmt(pPes)}</td>
+        </tr><tr>
+          <td style="${GH}">購入金額＋積立合計</td><td style="${VR}">${fmt(tCost)}</td>
+          <td style="${GH}">全投資額（評価＋積立）</td><td style="${VR}">${fmt(cPrin)}</td>
+        </tr><tr>
+          <td style="${GH}">中央値の利益</td>
+          <td style="${VR}${prof>=0?G:R}">${prof>=0?'+':''}${fmt(prof)}</td>
+          <td style="${GH}">購入額を下回る確率</td>
+          <td style="${VR}${parseFloat(loss)>20?R:'color:#555'}">${loss}%</td>
+        </tr><tr>
+          <td style="${GH}">IRR 中央値</td><td style="${VR}">${irrStr(irr.p50)}</td>
+          <td style="${GH}">IRR 楽観 / 悲観</td><td style="${VR}">${irrStr(irr.p90)} / ${irrStr(irr.p10)}</td>
+        </tr>
+      </table>`;
+  }
+
+  async function toCanvas(html) {
+    const el = document.createElement('div');
+    el.style.cssText = BASE;
+    el.innerHTML = html;
+    document.body.appendChild(el);
+    const c = await html2canvas(el, { scale:2, useCORS:true, logging:false, backgroundColor:'#ffffff' });
+    document.body.removeChild(el);
+    return c;
+  }
+
+  function addPage(pdf, canvas, isFirst) {
+    const W = 210;
+    const imgH = Math.min(canvas.height * W / canvas.width, 297);
+    if (!isFirst) pdf.addPage();
+    pdf.addImage(canvas.toDataURL('image/png'), 'PNG', 0, 0, W, imgH);
+  }
+
+  // ── グラフをオフスクリーンcanvasに描画してDataURLを返す ──
+  function renderChartToDataURL(type, yr, w, h) {
+    const oc = document.createElement('canvas');
+    oc.width  = w * 2;  // retina
+    oc.height = h * 2;
+    oc.style.width  = w + 'px';
+    oc.style.height = h + 'px';
+    document.body.appendChild(oc);
+
+    const d = simResults[yr];
+    if (type === 'hist') {
+      // ヒストグラム用の一時canvasにID付きで描画
+      oc.id = `_pdf_hist_${yr}`;
+      drawHist(`_pdf_hist_${yr}`, d.sorted, d.tCost, p.currentVal);
+    } else if (type === 'path') {
+      oc.id = `_pdf_path_${yr}`;
+      drawLinePath(`_pdf_path_${yr}`, d.paths, h, yr, undefined);
+    } else if (type === 'profit') {
+      const pp = {};
+      for (const k of ['p10','p25','p50','p75','p90'])
+        pp[k] = d.paths[k].map((v,i) => v - p.totalCostAt(i+1));
+      oc.id = `_pdf_profit_${yr}`;
+      drawLinePath(`_pdf_profit_${yr}`, pp, h, yr, 0);
+    }
+
+    const url = oc.toDataURL('image/png');
+    document.body.removeChild(oc);
+    return url;
+  }
+
+  // グラフページHTML（DataURLをimgタグとして埋め込む）
+  function chartPageHTML(yr1, yr2) {
+    const imgStyle = 'width:100%;display:block;border:1px solid #e5e7eb;border-radius:4px;margin-bottom:6px';
+    const lbl = 'font-size:10px;color:#6b7280;padding:3px 0 2px;font-weight:bold';
+
+    function yrCharts(yr) {
+      const histUrl   = renderChartToDataURL('hist',   yr, 714, 180);
+      const pathUrl   = renderChartToDataURL('path',   yr, 714, 200);
+      const profitUrl = renderChartToDataURL('profit', yr, 714, 190);
+      return `
+        <div style="${BH};margin-top:${yr===yr1?'0':'16px'}">${yr}年後 グラフ</div>
+        <div style="${lbl}">▸ 最終資産額の分布（赤：購入額割れ　青：利益）</div>
+        <img src="${histUrl}" style="${imgStyle}">
+        <div style="${lbl}">▸ 資産額の年次推移</div>
+        <img src="${pathUrl}" style="${imgStyle}">
+        <div style="${lbl}">▸ 利益額の年次推移（購入金額からの利益）</div>
+        <img src="${profitUrl}" style="${imgStyle}">`;
+    }
+
+    return yrCharts(yr1) + yrCharts(yr2);
+  }
+
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF({ unit:'mm', format:'a4' });
+    const unreal = p.currentVal - p.costBasis;
+
+    // ── P1: ヘッダー＋入力条件＋5年後＋10年後 ──
+    const page1 = `
+      <div style="background:#1d4ed8;color:#fff;padding:14px 18px;margin:-28px -36px 16px;
+                  display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-size:17px;font-weight:bold">投資信託収益診断</div>
+          <div style="font-size:9px;opacity:0.75;margin-top:2px">MONTE CARLO SIMULATION REPORT　Ver 1.0</div>
+        </div>
+        <div style="text-align:right;font-size:10px;opacity:0.9">
+          <div>診断日</div><div style="font-size:12px;font-weight:bold">${today}</div>
+        </div>
+      </div>
+      <div style="${BH}">入力条件</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:2px">
+        <tr>
+          <td style="${GH};width:24%">現在の評価額</td><td style="${VR}">${fmt(p.currentVal)}</td>
+          <td style="${GH};width:24%">取得価格合計</td><td style="${VR}">${fmt(p.costBasis)}</td>
+        </tr><tr>
+          <td style="${GH}">現在の含み益</td>
+          <td style="${VR}${unreal>=0?G:R}">${unreal>=0?'+':''}${fmt(unreal)}</td>
+          <td style="${GH}">月次積立額</td><td style="${VR}">${fmt(p.monthlyC)}/月</td>
+        </tr><tr>
+          <td style="${GH}">積立継続期間</td><td style="${VR}">${p.contribYrs}年</td>
+          <td style="${GH}">想定年率リターン</td><td style="${VR}">${(p.muAnnual*100).toFixed(1)}%</td>
+        </tr><tr>
+          <td style="${GH}">年率ボラティリティ</td><td style="${VR}">${(p.volAnnual*100).toFixed(1)}%</td>
+          <td style="${GH}">シミュレーション回数</td><td style="${VR}">${p.numSim.toLocaleString()}回</td>
+        </tr>
+      </table>
+      ${yrBlock(5)}${yrBlock(10)}`;
+    addPage(pdf, await toCanvas(page1), true);
+
+    // ── P2: 15年後＋20年後 ──
+    addPage(pdf, await toCanvas(yrBlock(15) + yrBlock(20)), false);
+
+    // ── P3: 5年・10年 グラフ ──
+    addPage(pdf, await toCanvas(chartPageHTML(5, 10)), false);
+
+    // ── P4: 15年・20年 グラフ ──
+    addPage(pdf, await toCanvas(chartPageHTML(15, 20)), false);
+
+    // ── P5: 比較＋免責 ──
+    const CL = 'padding:6px 10px;font-size:11px;border-bottom:1px solid #e5e7eb;';
+    const CR = CL + 'text-align:right;white-space:nowrap;';
+    const compareRows = [
+      ['中央値',           yr => fmt(percentile(simResults[yr].sorted, 50))],
+      ['楽観シナリオ',     yr => fmt(percentile(simResults[yr].sorted, 90))],
+      ['悲観シナリオ',     yr => fmt(percentile(simResults[yr].sorted, 10))],
+      ['IRR（中央値）',    yr => irrStr(simResults[yr].irr.p50)],
+      ['購入額を下回る確率', yr => {
+        const n = simResults[yr].sorted.length;
+        const l = simResults[yr].sorted.filter(v=>v<simResults[yr].tCost).length;
+        return (l/n*100).toFixed(1)+'%';
+      }],
+    ];
+    const trows = compareRows.map(([label, fn], i) => `
+      <tr style="background:${i%2===0?'#f9fafb':'#fff'}">
+        <td style="${CL}font-weight:bold;color:#555;white-space:nowrap">${label}</td>
+        ${simPeriods.map(yr=>`<td style="${CR}">${fn(yr)}</td>`).join('')}
+      </tr>`).join('');
+
+    const page5 = `
+      <div style="${BH}">期間別比較サマリー</div>
+      <table style="width:100%;border-collapse:collapse;margin-bottom:20px">
+        <thead>
+          <tr style="background:#1f2937;color:#fff">
+            <th style="padding:6px 10px;text-align:left;font-size:11px">指標</th>
+            ${simPeriods.map(y=>`<th style="padding:6px 10px;text-align:right;font-size:11px;white-space:nowrap">${y}年後</th>`).join('')}
+          </tr>
+        </thead>
+        <tbody>${trows}</tbody>
+      </table>
+      <div style="background:#fffbeb;border:1.5px solid #fbbf24;border-radius:8px;padding:14px 16px">
+        <div style="font-weight:bold;color:#92400e;margin-bottom:6px">⚠ 免責事項</div>
+        <div style="font-size:10px;color:#78350f;line-height:1.9">
+          本ツールの結果は、入力された数値および想定利回り等を基にしたシミュレーション結果です。<br>
+          将来の投資成果や資産額を保証するものではありません。<br>
+          投資判断はご自身の責任で行ってください。
+        </div>
+      </div>
+      <div style="text-align:center;font-size:9px;color:#aaa;margin-top:14px">
+        投資信託収益診断 Ver 1.0 &nbsp;|&nbsp; ${today}
+      </div>`;
+    addPage(pdf, await toCanvas(page5), false);
+
+    // iOS/Androidを含む全デバイス対応の保存処理
+    const pdfBlob = pdf.output('blob');
+    const blobUrl = URL.createObjectURL(pdfBlob);
+    const filename = `投資信託収益診断_${iso}.pdf`;
+
+    // iOS Safari判定
+    const isIOS = /iP(hone|ad|od)/i.test(navigator.userAgent) ||
+                  (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+
+    if (isIOS) {
+      // iOSは<a>のdownloadが動かないので新タブで開く（長押し→保存 or 共有ボタンで保存）
+      const newTab = window.open(blobUrl, '_blank');
+      if (!newTab) {
+        // ポップアップブロックされた場合はリンクを画面に表示
+        const linkDiv = document.createElement('div');
+        linkDiv.style.cssText = 'position:fixed;bottom:20px;left:50%;transform:translateX(-50%);' +
+          'background:#1d4ed8;color:white;padding:14px 20px;border-radius:12px;z-index:9999;' +
+          'font-family:"Noto Sans JP",sans-serif;font-size:14px;box-shadow:0 4px 20px rgba(0,0,0,0.3);text-align:center';
+        linkDiv.innerHTML = `<a href="${blobUrl}" target="_blank" style="color:white;text-decoration:none;font-weight:bold">📄 PDFを開く（長押しで保存）</a>
+          <div style="font-size:11px;opacity:0.8;margin-top:4px">タップで開いて、共有ボタン→「ファイルに保存」</div>`;
+        document.body.appendChild(linkDiv);
+        setTimeout(() => { document.body.removeChild(linkDiv); URL.revokeObjectURL(blobUrl); }, 15000);
+      } else {
+        setTimeout(() => URL.revokeObjectURL(blobUrl), 10000);
+      }
+    } else {
+      // Android・PC：通常のダウンロード
+      const a = document.createElement('a');
+      a.href = blobUrl;
+      a.download = filename;
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(blobUrl), 5000);
+    }
+  } finally {
+    btn.disabled = false;
+    btn.textContent = '📄 PDF保存';
+  }
+}
+
+// ════════════════════════════════════════════
+// SCREEN NAVIGATION  ※ nfState等の宣言より後に置くこと
+// ════════════════════════════════════════════
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+function goBack() { showScreen('screen-input'); }
+
+function resetAll() {
+  // confirm()はスマホで動作しない場合があるためインラインUIを使用
+  document.getElementById('resetConfirm').style.display = 'block';
+  document.getElementById('resetBtn').style.display = 'none';
+}
+
+function cancelReset() {
+  document.getElementById('resetConfirm').style.display = 'none';
+  document.getElementById('resetBtn').style.display = '';
+}
+
+function doReset() {
+  document.getElementById('resetConfirm').style.display = 'none';
+  document.getElementById('resetBtn').style.display = '';
+  if (openFieldId) { _closeUI(openFieldId); openFieldId = null; }
+  NUMPAD_FIELDS.forEach(f => {
+    nfState[f.id] = 0;
+    nkBuf[f.id]   = '';
+    _refreshBadge(f.id);
+    _refreshBigNum(f.id);
+  });
+  document.getElementById('mu').value    = 7;
+  document.getElementById('vol').value   = 15;
+  document.getElementById('numSim').value= 10000;
+  document.getElementById('muVal').textContent   = '7.0%';
+  document.getElementById('volVal').textContent  = '15%';
+  document.getElementById('numSimVal').textContent = '10,000';
+  document.getElementById('runStatus').textContent = '';
+}
+
+// ════════════════════════════════════════════
+// INIT
+// ════════════════════════════════════════════
+buildNumpadFields();
+</script>
+</body>
+</html>
